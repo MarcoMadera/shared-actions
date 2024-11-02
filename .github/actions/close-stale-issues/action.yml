@@ -4,11 +4,11 @@ inputs:
   days-before-stale:
     description: "Days before an issue or PR is considered stale"
     required: false
-    default: "90"
+    default: "80"
   days-before-close:
     description: "Days before a stale issue or PR is closed"
     required: false
-    default: "14"
+    default: "12"
 runs:
   using: "composite"
   steps:
