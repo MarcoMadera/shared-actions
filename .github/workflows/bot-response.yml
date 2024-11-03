@@ -5,6 +5,14 @@ on:
     secrets:
       token:
         required: true
+      GIT_USER_EMAIL:
+        required: false
+      GIT_USER_NAME:
+        required: false
+    inputs:
+      issue_id:
+        required: false
+        type: string
 
 jobs:
   respond_to_bot:
@@ -19,6 +27,12 @@ jobs:
           if [[ "$COMMENT_BODY" == *"@SawBot"* ]]; then
             RESPONSE="Hi @$USERNAME!"
             echo "response=$RESPONSE" >> $GITHUB_ENV
+
+            if [[ "$COMMENT_BODY" == *"@SawBot retry update submodule"* ]]; then
+              echo "command=retry_update_submodule" >> $GITHUB_ENV
+              echo "username=$USERNAME" >> $GITHUB_ENV
+              RESPONSE="$RESPONSE - Updating submodule."
+            fi
           fi
 
       - name: Add Response Comment
@@ -34,3 +48,12 @@ jobs:
               body: response
             });
           github-token: ${{ secrets.token }}
+
+      - name: Retry Update Submodule
+        if: env.command == 'retry_update_submodule'
+        uses: ./.github/workflows/update-submodule.yml
+        with:
+          token: ${{ secrets.BOT_TOKEN }}
+          git_user_email: ${{ secrets.GIT_USER_EMAIL }}
+          git_user_name: ${{ secrets.GIT_USER_NAME }}
+          issue_id: ${{inputs.issue_id}}
