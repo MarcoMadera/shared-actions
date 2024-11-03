@@ -58,7 +58,7 @@ runs:
 
     - name: Perform Rebase
       run: |
-        echo "Checking out base branch ${inputs.base_branch}..."
+        echo "Checking out base branch ${{ inputs.base_branch }}..."
         git checkout ${{ inputs.base_branch }}
         git pull origin ${{ inputs.base_branch }}
         echo "Rebasing $BRANCH_NAME onto ${{ inputs.base_branch }}..."
