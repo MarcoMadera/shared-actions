@@ -68,11 +68,45 @@ runs:
         if git rebase origin/${{ inputs.base_branch }}; then
           echo "Rebase successful."
           git push --force-with-lease origin $BRANCH_NAME
+          echo "rebase_status=success" >> $GITHUB_ENV
         else
           echo "Rebase failed. Please resolve conflicts."
+          echo "rebase_status=failure" >> $GITHUB_ENV
           exit 1
         fi
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
       shell: bash
 
+    - name: Close Pull Request
+      if: env.rebase_status == 'success' && (git rev-parse --quiet --verify origin/${{ inputs.base_branch }} && git diff --quiet origin/${{ inputs.base_branch }}...$BRANCH_NAME)
+      uses: actions/github-script@v4
+      with:
+        script: |
+          await github.pulls.update({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: ${{ inputs.issue_id }},
+            state: 'closed'
+          });
+          await github.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: 'The pull request has been rebased successfully and closed. All changes are now reflected in the base branch'
+          });
+
+    - name: Add Comment for Rebase Status
+      if: always()
+      uses: actions/github-script@v4
+      with:
+        script: |
+          const message = process.env.REBASE_STATUS === 'success' ?
+            'The pull request has been successfully rebased' :
+            'Rebase failed. Please address the conflicts before proceeding.';
+          await github.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: message
+          });
