@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Use Update Submodule Composite Action
-        uses: MarcoMadera/shared-actions/.github/actions/update-submodule@v1.6
+        uses: MarcoMadera/shared-actions/.github/actions/update-submodule@v1.7
         with:
           token: ${{inputs.token || secrets.token }}
           git_user_email: ${{ inputs.git_user_email || secrets.GIT_USER_EMAIL }}
