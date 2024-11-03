@@ -34,6 +34,7 @@ runs:
           BRANCH_NAME="submodule-update-$(date +%Y%m%d%H%M%S)"
         fi
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+      shell: bash
 
     - name: Update Shared Actions
       id: update_shared_actions
@@ -41,6 +42,7 @@ runs:
         git config --global user.email "${{ inputs.git_user_email }}"
         git config --global user.name "${{ inputs.git_user_name }}" 
         git submodule update --remote --checkout
+      shell: bash
 
     - name: Create Pull Request
       id: create_pr
@@ -66,3 +68,4 @@ runs:
         git add .github/actions/shared-actions
         git commit -m "Update to latest shared actions submodule" || echo "No changes to commit"
         git push origin $BRANCH_NAME
+      shell: bash
