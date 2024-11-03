@@ -1,0 +1,17 @@
+{
+  "comment": {
+    "body": "@SawBot retry update submodule",
+    "user": {
+      "login": "MarcoMadera"
+    }
+  },
+  "issue": {
+    "number": 1
+  },
+  "repository": {
+    "owner": {
+      "login": "your-repo-owner"
+    },
+    "name": "your-repo-name"
+  }
+}
