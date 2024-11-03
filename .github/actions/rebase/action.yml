@@ -68,18 +68,29 @@ runs:
         if git rebase origin/${{ inputs.base_branch }}; then
           echo "Rebase successful."
           git push --force-with-lease origin $BRANCH_NAME
-          echo "rebase_status=success" >> $GITHUB_ENV
+          echo "REBASE_STATUS=success" >> $GITHUB_ENV
         else
           echo "Rebase failed. Please resolve conflicts."
-          echo "rebase_status=failure" >> $GITHUB_ENV
+          echo "REBASE_STATUS=failure" >> $GITHUB_ENV
           exit 1
         fi
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
       shell: bash
 
+    - name: Check for Changes
+      id: check_changes
+      run: |
+        git fetch origin
+        if git diff --quiet origin/${{ inputs.base_branch }}...$BRANCH_NAME; then
+          echo "NO_CHANGES=true" >> $GITHUB_ENV
+        else
+          echo "NO_CHANGES=false" >> $GITHUB_ENV
+        fi
+      shell: bash
+
     - name: Close Pull Request
-      if: env.rebase_status == 'success' && (git rev-parse --quiet --verify origin/${{ inputs.base_branch }} && git diff --quiet origin/${{ inputs.base_branch }}...$BRANCH_NAME)
+      if: env.REBASE_STATUS == 'success' && env.NO_CHANGES == 'true'
       uses: actions/github-script@v4
       with:
         script: |
@@ -95,9 +106,10 @@ runs:
             issue_number: context.issue.number,
             body: 'The pull request has been rebased successfully and closed. All changes are now reflected in the base branch'
           });
+        github-token: ${{ inputs.token }}
 
     - name: Add Comment for Rebase Status
-      if: always()
+      if: always() && env.NO_CHANGES == 'false'
       uses: actions/github-script@v4
       with:
         script: |
@@ -110,3 +122,4 @@ runs:
             issue_number: context.issue.number,
             body: message
           });
+        github-token: ${{ inputs.token }}
