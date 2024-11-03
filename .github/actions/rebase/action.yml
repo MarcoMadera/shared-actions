@@ -26,6 +26,7 @@ runs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        submodules: true
 
     - name: Get PR Branch
       id: get_pr_branch
@@ -57,8 +58,13 @@ runs:
 
     - name: Perform Rebase
       run: |
+        echo "Checking out base branch ${inputs.base_branch}..."
+        git checkout ${{ inputs.base_branch }}
+        git pull origin ${{ inputs.base_branch }}
         echo "Rebasing $BRANCH_NAME onto ${{ inputs.base_branch }}..."
         git checkout $BRANCH_NAME
+        git submodule update --init --recursive
+
         if git rebase origin/${{ inputs.base_branch }}; then
           echo "Rebase successful."
           git push --force-with-lease origin $BRANCH_NAME
