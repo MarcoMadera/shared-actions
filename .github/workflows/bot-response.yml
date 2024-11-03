@@ -1,0 +1,36 @@
+name: Respond to Bot Mentions
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+
+jobs:
+  respond_to_bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Bot Mention
+        id: check_for_bot_mention
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          USERNAME="${{ github.event.comment.user.login }}"
+
+          if [[ "$COMMENT_BODY" == *"@SawBot"* ]]; then
+            RESPONSE="Hi @$USERNAME!"
+            echo "response=$RESPONSE" >> $GITHUB_ENV
+          fi
+
+      - name: Add Response Comment
+        if: env.response != ''
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const { context } = require('@actions/github');
+            const response = process.env.response; // Access the response from the environment variable
+            await github.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: response
+            });
+          github-token: ${{ secrets.token }} # Use the secret token for authentication
