@@ -51,7 +51,7 @@ jobs:
 
       - name: Retry Update Submodule
         if: env.command == 'retry_update_submodule'
-        uses: ./.github/workflows/update-submodule.yml
+        uses: ./.github/actions/shared-actions/.github/workflows/update-submodule.yml
         with:
           token: ${{ secrets.BOT_TOKEN }}
           git_user_email: ${{ secrets.GIT_USER_EMAIL }}
