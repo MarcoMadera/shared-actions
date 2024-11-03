@@ -46,11 +46,11 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.token }}
-          committer: "${{ inputs.git_user_name || secrets.GIT_USER_NAME }} <${{ inputs.git_user_email || secrets.GIT_USER_EMAIL }}"
+          committer: "${{ inputs.git_user_name || secrets.GIT_USER_NAME }} <${{ inputs.git_user_email || secrets.GIT_USER_EMAIL }}>"
           branch: ${{ env.BRANCH_NAME }}
           title: "Update shared actions submodule"
           commit-message: "Update to latest shared actions submodule"
-          author: "${{ inputs.git_user_name || secrets.GIT_USER_NAME }} <${{ inputs.git_user_email || secrets.GIT_USER_EMAIL }}"
+          author: "${{ inputs.git_user_name || secrets.GIT_USER_NAME }} <${{ inputs.git_user_email || secrets.GIT_USER_EMAIL }}>"
           labels: |
             update-modules
           body: "This PR updates the shared actions submodule to the latest commit."
