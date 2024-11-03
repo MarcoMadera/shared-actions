@@ -1,0 +1,54 @@
+name: Pull Latest Submodule Update
+
+on:
+  workflow_call:
+    inputs:
+      token:
+        required: false
+        type: string
+      git_user_email:
+        required: false
+        type: string
+      git_user_name:
+        required: false
+        type: string
+
+jobs:
+  pull_update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout target repository with submodules
+        uses: actions/checkout@v4
+        with:
+          token: ${{ inputs.token || secrets.BOT_TOKEN }}
+          submodules: true
+          fetch-depth: 0
+
+      - name: Update Shared Actions
+        id: update_shared_actions
+        run: |
+          git config --global user.email "${{ inputs.git_user_email || secrets.GIT_USER_EMAIL }}"
+          git config --global user.name "${{ inputs.git_user_name || secrets.GIT_USER_NAME }}"
+          BRANCH_NAME="submodule-update-$(date +%Y%m%d%H%M%S)"
+          git checkout -b $BRANCH_NAME
+          git submodule update --remote --checkout
+          git add .github/actions/shared-actions
+          git commit -m "Update to latest shared actions submodule" || echo "No changes to commit"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Create Pull Request
+        id: create_pr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ inputs.token || secrets.BOT_TOKEN }}
+          committer: "${{ inputs.git_user_name || secrets.GIT_USER_NAME }} <${{ inputs.git_user_email || secrets.GIT_USER_EMAIL }}"
+          branch: ${{ env.BRANCH_NAME }}
+          title: "Update shared actions submodule"
+          commit-message: "Update to latest shared actions submodule"
+          author: "${{ inputs.git_user_name || secrets.GIT_USER_NAME }} <${{ inputs.git_user_email || secrets.GIT_USER_EMAIL }}"
+          labels: |
+            update-modules
+          body: "This PR updates the shared actions submodule to the latest commit."
+          delete-branch: true
+          draft: false
