@@ -2,6 +2,13 @@ name: Pull Latest Submodule Update
 
 on:
   workflow_call:
+    secrets:
+      token:
+        required: true
+      git_user_email:
+        required: false
+      git_user_name:
+        required: false
     inputs:
       token:
         required: false
@@ -21,7 +28,7 @@ jobs:
       - name: Checkout target repository with submodules
         uses: actions/checkout@v4
         with:
-          token: ${{ inputs.token || secrets.BOT_TOKEN }}
+          token: ${{ secrets.token }}
           submodules: true
           fetch-depth: 0
 
@@ -41,7 +48,7 @@ jobs:
         id: create_pr
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ inputs.token || secrets.BOT_TOKEN }}
+          token: ${{ secrets.token }}
           committer: "${{ inputs.git_user_name || secrets.GIT_USER_NAME }} <${{ inputs.git_user_email || secrets.GIT_USER_EMAIL }}"
           branch: ${{ env.BRANCH_NAME }}
           title: "Update shared actions submodule"
