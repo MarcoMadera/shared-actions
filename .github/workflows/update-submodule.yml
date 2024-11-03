@@ -19,6 +19,9 @@ on:
       git_user_name:
         required: false
         type: string
+      issue_id:
+        required: false
+        type: string
 
 jobs:
   pull_update:
@@ -28,24 +31,35 @@ jobs:
       - name: Checkout target repository with submodules
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.token }}
+          token: ${{inputs.token || secrets.token }}
           submodules: true
           fetch-depth: 0
+
+      - name: Get PR Branch
+        id: get_pr_branch
+        run: |
+          if [ -n "${{ inputs.issue_id }}" ]; then
+            PR_INFO=$(curl -s -H "Authorization: token ${{ inputs.token || secrets.token }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ inputs.issue_id }}")
+            BRANCH_NAME=$(echo $PR_INFO | jq -r .head.ref)
+          else
+            echo "No PR number provided."
+            BRANCH_NAME="submodule-update-$(date +%Y%m%d%H%M%S)"
+          fi
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
       - name: Update Shared Actions
         id: update_shared_actions
         run: |
           git config --global user.email "${{ inputs.git_user_email || secrets.GIT_USER_EMAIL }}"
-          git config --global user.name "${{ inputs.git_user_name || secrets.GIT_USER_NAME }}"
-          BRANCH_NAME="submodule-update-$(date +%Y%m%d%H%M%S)"
+          git config --global user.name "${{ inputs.git_user_name || secrets.GIT_USER_NAME }}" 
           git submodule update --remote --checkout
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
       - name: Create Pull Request
         id: create_pr
+        if: ${{ inputs.issue_id == '' }}
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.token }}
+          token: ${{ inputs.token || secrets.token }}
           committer: "${{ inputs.git_user_name || secrets.GIT_USER_NAME }} <${{ inputs.git_user_email || secrets.GIT_USER_EMAIL }}>"
           branch: ${{ env.BRANCH_NAME }}
           title: "Update shared actions submodule"
@@ -56,3 +70,11 @@ jobs:
           body: "This PR updates the shared actions submodule to the latest commit."
           delete-branch: true
           draft: false
+
+      - name: Push Changes
+        if: ${{ inputs.issue_id != '' }}
+        run: |
+          git checkout $BRANCH_NAME
+          git add .github/actions/shared-actions
+          git commit -m "Update to latest shared actions submodule" || echo "No changes to commit"
+          git push origin $BRANCH_NAME
