@@ -1,0 +1,72 @@
+name: Rebase
+
+description: Rebase the current branch onto the specified base branch.
+
+inputs:
+  token:
+    required: true
+    description: The GitHub token to authenticate API requests.
+  git_user_email:
+    required: false
+    description: The email address for the Git configuration.
+  git_user_name:
+    required: false
+    description: The name for the Git configuration.
+  issue_id:
+    required: false
+    description: The issue ID for context (if needed).
+  base_branch:
+    required: true
+    description: The base branch to rebase onto.
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get PR Branch
+      id: get_pr_branch
+      run: |
+        if [ -n "${{ inputs.issue_id }}" ]; then
+          PR_INFO=$(curl -s -H "Authorization: token ${{ inputs.token }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ inputs.issue_id }}")
+          BRANCH_NAME=$(echo $PR_INFO | jq -r .head.ref)
+        else
+          echo "No PR number provided."
+          BRANCH_NAME="submodule-update-$(date +%Y%m%d%H%M%S)"
+        fi
+        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Set up Git Config
+      run: |
+        if [ -n "${{ inputs.git_user_email }}" ]; then
+          git config --global user.email "${{ inputs.git_user_email }}"
+        fi
+        if [ -n "${{ inputs.git_user_name }}" ]; then
+          git config --global user.name "${{ inputs.git_user_name }}"
+        fi
+      shell: bash
+
+    - name: Fetch Base Branch
+      run: |
+        git fetch origin ${{ inputs.base_branch }}
+      shell: bash
+
+    - name: Perform Rebase
+      run: |
+        echo "Rebasing $BRANCH_NAME onto ${{ inputs.base_branch }}..."
+        git checkout $BRANCH_NAME
+        if git rebase origin/${{ inputs.base_branch }}; then
+          echo "Rebase successful."
+          git push --force-with-lease origin $BRANCH_NAME
+        else
+          echo "Rebase failed. Please resolve conflicts."
+          exit 1
+        fi
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+      shell: bash
+

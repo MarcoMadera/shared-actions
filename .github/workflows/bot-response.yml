@@ -13,6 +13,9 @@ on:
       issue_id:
         required: false
         type: string
+      base_branch:
+        required: true
+        type: string
 
 jobs:
   respond_to_bot:
@@ -26,13 +29,19 @@ jobs:
 
           if [[ "$COMMENT_BODY" == *"@SawBot"* ]]; then
             RESPONSE="Hi @$USERNAME!"
-            echo "response=$RESPONSE" >> $GITHUB_ENV
+            
 
             if [[ "$COMMENT_BODY" == *"@SawBot retry update submodule"* ]]; then
               echo "command=retry_update_submodule" >> $GITHUB_ENV
-              echo "username=$USERNAME" >> $GITHUB_ENV
               RESPONSE="$RESPONSE - Updating submodule."
             fi
+
+            if [[ "$COMMENT_BODY" == *"@SawBot rebase"* ]]; then
+              echo "command=rebase" >> $GITHUB_ENV
+              RESPONSE="$RESPONSE - Applying rebase"
+            fi
+            echo "username=$USERNAME" >> $GITHUB_ENV
+            echo "response=$RESPONSE" >> $GITHUB_ENV
           fi
 
       - name: Add Response Comment
