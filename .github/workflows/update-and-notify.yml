@@ -1,0 +1,24 @@
+name: Notify Repos of Shared Actions Update
+
+on:
+  schedule:
+    - cron: "0 0 */3 * *" # Every 3 days at midnight UTC
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  notify_targets:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target_repo: ["MarcoMadera/rindu", "MarcoMadera/blog"]
+
+    steps:
+      - name: Notify repositories
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.BOT_TOKEN }}
+          repository: ${{ matrix.target_repo }}
+          event-type: submodule-updated

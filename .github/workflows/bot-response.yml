@@ -1,0 +1,78 @@
+name: Respond to Bot Mentions
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+      GIT_USER_EMAIL:
+        required: false
+      GIT_USER_NAME:
+        required: false
+    inputs:
+      issue_id:
+        required: false
+        type: string
+      base_branch:
+        required: true
+        type: string
+
+jobs:
+  respond_to_bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Bot Mention
+        id: check_for_bot_mention
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          USERNAME="${{ github.event.comment.user.login }}"
+
+          if [[ "$COMMENT_BODY" == *"@SawBot"* ]]; then
+            RESPONSE="Hi @$USERNAME!"
+            
+
+            if [[ "$COMMENT_BODY" == *"@SawBot retry update submodule"* ]]; then
+              echo "command=retry_update_submodule" >> $GITHUB_ENV
+              RESPONSE="$RESPONSE - Updating submodule."
+            fi
+
+            if [[ "$COMMENT_BODY" == *"@SawBot rebase"* ]]; then
+              echo "command=rebase" >> $GITHUB_ENV
+              RESPONSE="$RESPONSE - Applying rebase"
+            fi
+            echo "username=$USERNAME" >> $GITHUB_ENV
+            echo "response=$RESPONSE" >> $GITHUB_ENV
+          fi
+
+      - name: Add Response Comment
+        if: env.response != ''
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const response = process.env.response;
+            await github.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: response
+            });
+          github-token: ${{ secrets.token }}
+
+      - name: Retry Update Submodule
+        if: env.command == 'retry_update_submodule'
+        uses: MarcoMadera/shared-actions/.github/actions/update-submodule@v1.7
+        with:
+          token: ${{ secrets.token }}
+          git_user_email: ${{ secrets.GIT_USER_EMAIL }}
+          git_user_name: ${{ secrets.GIT_USER_NAME }}
+          issue_id: ${{inputs.issue_id}}
+
+      - name: Rebase
+        if: env.command == 'rebase'
+        uses: MarcoMadera/shared-actions/.github/actions/rebase@v1.7
+        with:
+          token: ${{ secrets.token }}
+          git_user_email: ${{ secrets.GIT_USER_EMAIL }}
+          git_user_name: ${{ secrets.GIT_USER_NAME }}
+          issue_id: ${{ inputs.issue_id }}
+          base_branch: ${{ inputs.base_branch }}

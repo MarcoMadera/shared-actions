@@ -1,0 +1,36 @@
+name: Pull Latest Submodule Update
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+      GIT_USER_EMAIL:
+        required: false
+      GIT_USER_NAME:
+        required: false
+    inputs:
+      token:
+        required: false
+        type: string
+      git_user_email:
+        required: false
+        type: string
+      git_user_name:
+        required: false
+        type: string
+      issue_id:
+        required: false
+        type: string
+
+jobs:
+  pull_update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Update Submodule Composite Action
+        uses: MarcoMadera/shared-actions/.github/actions/update-submodule@v1.7
+        with:
+          token: ${{inputs.token || secrets.token }}
+          git_user_email: ${{ inputs.git_user_email || secrets.GIT_USER_EMAIL }}
+          git_user_name: ${{ inputs.git_user_name || secrets.GIT_USER_NAME }}
+          issue_id: ${{ inputs.issue_id }}
