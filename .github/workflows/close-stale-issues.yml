@@ -2,6 +2,13 @@ name: Close Stale Issues and PRs
 
 on:
   workflow_call:
+    secrets:
+      token:
+        required: true
+      GIT_USER_EMAIL:
+        required: true
+      GIT_USER_NAME:
+        required: true
     inputs:
       days-before-stale:
         description: "Days before an issue or PR is considered stale"
@@ -13,28 +20,19 @@ on:
         required: false
         default: "14"
         type: string
-      token:
-        description: "Personal Access Token (PAT) for the bot. Uses GITHUB_TOKEN if not provided."
-        required: false
-        type: string
-      git_user_email:
-        description: "Email address of the bot. Only used if provided."
-        required: false
-        type: string
-      git_user_name:
-        description: "Username of the bot. Only used if provided."
-        required: false
-        type: string
-
 jobs:
   close_stale:
     runs-on: ubuntu-latest
-
     steps:
+      - name: Configure Git User
+        run: |
+          git config --global user.email "${{ secrets.GIT_USER_EMAIL }}"
+          git config --global user.name "${{ secrets.GIT_USER_NAME }}"
+
       - name: Close Stale Issues
         uses: actions/stale@v9
         with:
-          repo-token: ${{ inputs.token || secrets.BOT_TOKEN }}
+          repo-token: ${{ secrets.token }}
           days-before-stale: ${{ inputs.days-before-stale }}
           days-before-close: ${{ inputs.days-before-close }}
           stale-issue-message: "This issue has been marked as stale due to inactivity."
