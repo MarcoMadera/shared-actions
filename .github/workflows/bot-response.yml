@@ -60,7 +60,7 @@ jobs:
 
       - name: Retry Update Submodule
         if: env.command == 'retry_update_submodule'
-        uses: MarcoMadera/shared-actions/.github/actions/update-submodule@v1.7
+        uses: MarcoMadera/shared-actions/.github/actions/update-submodule@v1.9
         with:
           token: ${{ secrets.token }}
           git_user_email: ${{ secrets.GIT_USER_EMAIL }}
@@ -69,7 +69,7 @@ jobs:
 
       - name: Rebase
         if: env.command == 'rebase'
-        uses: MarcoMadera/shared-actions/.github/actions/rebase@v1.7
+        uses: MarcoMadera/shared-actions/.github/actions/rebase@v1.9
         with:
           token: ${{ secrets.token }}
           git_user_email: ${{ secrets.GIT_USER_EMAIL }}
